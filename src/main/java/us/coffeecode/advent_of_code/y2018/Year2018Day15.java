@@ -17,15 +17,7 @@
 package us.coffeecode.advent_of_code.y2018;
 
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 import us.coffeecode.advent_of_code.Utils;
 
@@ -37,7 +29,21 @@ import us.coffeecode.advent_of_code.Utils;
  * bonus to give to the elves to guarantee they win.
  * </p>
  * <p>
- * TODO
+ * The algorithm has a lot going on, but the bulk of its complexity lies in path finding and deciding which step to
+ * make. First, we need to enumerate valid paths until finding ones that lead to an enemy. This is done using a
+ * breadth-first search similar to Djikstra's algorithm. There is some basic optimization going on, such as not allowing
+ * a path to backtrack or cross itself. At every iteration, look for paths that end at the same square: if so, they are
+ * close enough to equivalent that we can prune all except one. In this case we group them based on their ending square,
+ * then pick one that starts with the best starting square which is rated based on reading order. This minimizes
+ * redundant paths.
+ * </p>
+ * <p>
+ * Each path tracks its own visited points. A naive implementation (that is, an earlier version of the code I wrote)
+ * would simply count the points in the path itself as visited. A more advanced optimization that reduces the running
+ * time by approximately 80% combines the visited points of the chosen path along with the visited points of paths
+ * pruned out in favor of the chosen path. This avoids backtracking or crossing not only the chosen path, but any other
+ * path deemed equivalent to it at some point. This holds because crossing over any of those paths <i>cannot</i> be a
+ * shortest path to an enemy. This can greatly reduce the search space for each path.
  * </p>
  * <p>
  * Copyright (c) 2021 John Gaughan
@@ -182,7 +188,7 @@ public final class Year2018Day15 {
         final Point end = path.end();
         for (final Point neighbor : end.neighbors()) {
           // Neighbor must not be occupied by a wall or actor: we cannot have visited it already.
-          if (state.isOpen(neighbor) && !path.contains(neighbor)) {
+          if (state.isOpen(neighbor) && !path.visited.contains(neighbor)) {
             newPaths.add(new Path(path, neighbor));
           }
         }
@@ -245,14 +251,20 @@ public final class Year2018Day15 {
       }
       endPointsToPaths.get(p).add(path);
     }
-    // For each point, get the path that is first in reading order.
+    // For each point, get the path that is first in reading order. Use this one. At the same time, update that path's
+    // visited points to include all other paths that are equivalent to it.
     final Set<Path> result = new HashSet<>();
     for (final Point endPoint : endPointsToPaths.keySet()) {
       Path path = null;
+      final Set<Point> visited = new HashSet<>();
       for (final Path candidate : endPointsToPaths.get(endPoint)) {
         if (path == null || candidate.start().compareTo(path.start()) < 0) {
           path = candidate;
         }
+        visited.addAll(candidate.visited);
+      }
+      if (path != null) {
+        path.addVisited(visited);
       }
       result.add(path);
     }
@@ -283,14 +295,23 @@ public final class Year2018Day15 {
 
     final Point[] elements;
 
+    final Set<Point> visited = new HashSet<>();
+
     Path(final Point first) {
       elements = new Point[] { first };
+      visited.add(first);
     }
 
     Path(final Path first, final Point next) {
       elements = new Point[first.elements.length + 1];
       System.arraycopy(first.elements, 0, elements, 0, first.elements.length);
       elements[first.elements.length] = next;
+      visited.addAll(first.visited);
+      visited.add(next);
+    }
+
+    void addVisited(final Collection<? extends Point> points) {
+      visited.addAll(points);
     }
 
     Point start() {
@@ -299,15 +320,6 @@ public final class Year2018Day15 {
 
     Point end() {
       return elements[elements.length - 1];
-    }
-
-    boolean contains(final Point p) {
-      for (final Point element : elements) {
-        if (element.equals(p)) {
-          return true;
-        }
-      }
-      return false;
     }
 
     @Override
