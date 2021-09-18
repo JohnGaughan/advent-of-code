@@ -44,6 +44,12 @@ public final class Utils {
       "day" + (day < 10 ? "0" + day : Integer.toString(day)) + ".txt");
   }
 
+  /** Gets the path containing input data for the given year and day. Used by unit tests. */
+  public static Path getInput(final int year, final int day, final String test) {
+    return Path.of("src", "main", "resources", Integer.toString(year),
+      "day" + (day < 10 ? "0" + day : Integer.toString(day)) + "-" + test + ".txt");
+  }
+
   /**
    * Given an array of code points, convert to a string. Java's String class can construct a string from bytes and
    * characters, but not code points.
