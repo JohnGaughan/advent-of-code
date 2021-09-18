@@ -17,8 +17,6 @@
 package us.coffeecode.advent_of_code.y2018;
 
 import java.nio.file.Files;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,14 +37,7 @@ import us.coffeecode.advent_of_code.Utils;
  * bonus to give to the elves to guarantee they win.
  * </p>
  * <p>
- * Right now, this solution does not find the answer. It passes all of the sample inputs given by the problem. It passes
- * all of the supplementary sample inputs located in
- * <a href="https://github.com/ShaneMcC/aoc-2018/tree/master/15/tests">this GitHub repository</a>. This includes several
- * tests from a reddit thread and some others of unknown origin. All of these pass: however, none of the real inputs
- * pass. I tracked down three other official inputs other than my own. Of the four real problem inputs, I have answers
- * for two of them. Despite passing all of the test inputs, this solution does not find the answer for any of the real
- * inputs. There must be an edge case my program misses that is not covered by any of the test inputs, or is covered by
- * somehow my program pulls a Homer and still gets the right answer despite going about it the wrong way.
+ * TODO
  * </p>
  * <p>
  * Copyright (c) 2021 John Gaughan
@@ -56,23 +47,8 @@ import us.coffeecode.advent_of_code.Utils;
  */
 public final class Year2018Day15 {
 
-  private static final ThreadLocal<NumberFormat> FORMAT = new ThreadLocal<>() {
-
-    protected NumberFormat initialValue() {
-      return new DecimalFormat("###,###");
-    }
-  };
-
   public long calculatePart1() {
-    return calculatePart1Impl(null);
-  }
-
-  public long calculatePart1(final String test) {
-    return calculatePart1Impl(test);
-  }
-
-  private long calculatePart1Impl(final String test) {
-    final var state = getInput(test);
+    final var state = getInput();
     int rounds = 0;
     while (true) {
       final Set<Actor> turnTaken = new HashSet<>();
@@ -106,11 +82,6 @@ public final class Year2018Day15 {
       }
     }
     final int result = rounds * hp;
-    System.out.println("Input: " + test);
-    System.out.println("Rounds: " + FORMAT.get().format(rounds));
-    System.out.println("HPs: " + FORMAT.get().format(hp));
-    System.out.println("Result: " + FORMAT.get().format(result));
-    System.out.println();
     return result;
   }
 
@@ -171,8 +142,6 @@ public final class Year2018Day15 {
   private Set<Path> enumerateAllShortestPaths(final State state, final Point location) {
     final Actor me = state.actorAt(location);
 
-    final Set<Point> visited = new HashSet<>();
-
     Set<Path> paths = new HashSet<>();
     // Populate the base case, one step from current location.
     for (final Point neighbor : location.neighbors()) {
@@ -196,9 +165,8 @@ public final class Year2018Day15 {
         final Point end = path.end();
         for (final Point neighbor : end.neighbors()) {
           // Neighbor must not be occupied by a wall or actor: we cannot have visited it already.
-          if (state.isOpen(neighbor) && !visited.contains(neighbor)) {
+          if (state.isOpen(neighbor) && !path.contains(neighbor)) {
             newPaths.add(new Path(path, neighbor));
-            visited.add(neighbor);
           }
         }
       }
@@ -275,12 +243,9 @@ public final class Year2018Day15 {
   }
 
   /** Get the input data for this solution. */
-  private State getInput(final String test) {
+  private State getInput() {
     try {
-      if (test == null || test.isBlank()) {
-        return new State(Files.readAllLines(Utils.getInput(2018, 15)));
-      }
-      return new State(Files.readAllLines(Utils.getInput(2018, 15, test)));
+      return new State(Files.readAllLines(Utils.getInput(2018, 15)));
     }
     catch (RuntimeException ex) {
       throw ex;
@@ -317,6 +282,15 @@ public final class Year2018Day15 {
 
     Point end() {
       return elements[elements.length - 1];
+    }
+
+    boolean contains(final Point p) {
+      for (final Point element : elements) {
+        if (element.equals(p)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override
