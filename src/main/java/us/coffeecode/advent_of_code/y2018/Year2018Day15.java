@@ -141,6 +141,13 @@ public final class Year2018Day15 {
 
   private Point move(final State state, final Point location) {
     final Actor me = state.actorAt(location);
+
+    // We already determined that the actor needs to move: are there any enemies with adjacent openings? If not, do not
+    // bother path finding because there cannot be a target point to which to move.
+    if (!state.isAnyEnemyActorTriviallyReachable(me.force)) {
+      return location;
+    }
+
     // 1. Create paths branching out from the current location until we find an enemy, or
     // there are no more paths to try. This produces zero or more shortest paths.
     Set<Path> paths = enumerateAllShortestPaths(state, location);
@@ -529,6 +536,27 @@ public final class Year2018Day15 {
         }
       }
       return true;
+    }
+
+    /**
+     * Determine if a force other than the provided one is trivially reachable. If true, another force has an empty
+     * square next to it. This does not do any advanced path finding. This only checks that there is an open adjacent
+     * space to attack a member of another force.
+     */
+    boolean isAnyEnemyActorTriviallyReachable(final Force force) {
+      for (int y = 0; y < Y; ++y) {
+        for (int x = 0; x < Y; ++x) {
+          if (actors[y][x] != null && actors[y][x].force != force) {
+            // Found an enemy actor: see if there are any openings.
+            for (final Point p : new Point(x, y).neighbors()) {
+              if (!walls[p.y][p.x] && actors[p.y][p.x] == null) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+      return false;
     }
 
     void moveActor(final Point from, final Point to) {
