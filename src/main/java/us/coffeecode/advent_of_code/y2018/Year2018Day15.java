@@ -48,7 +48,24 @@ import us.coffeecode.advent_of_code.Utils;
 public final class Year2018Day15 {
 
   public long calculatePart1() {
+    return calculate(0);
+  }
+
+  public long calculatePart2() {
+    long result = -1;
+    int elfBonusAp = 12;
+    while (result < 0) {
+      ++elfBonusAp;
+      result = calculate(elfBonusAp);
+    }
+    return result;
+  }
+
+  private long calculate(final int elfBonusAp) {
     final var state = getInput();
+    if (elfBonusAp > 0) {
+      state.addBonusAp(Force.ELVES, elfBonusAp);
+    }
     int rounds = 0;
     while (true) {
       final Set<Actor> turnTaken = new HashSet<>();
@@ -60,6 +77,10 @@ public final class Year2018Day15 {
           if (actor != null && !turnTaken.contains(actor)) {
             lastAttack = takeTurn(state, location);
             turnTaken.add(actor);
+            // For part two, check if an elf was killed. If so, abort this simulation entirely.
+            if (elfBonusAp > 0 && lastAttack == AttackResult.KILLED && actor.force != Force.ELVES) {
+              return -1;
+            }
           }
         }
       }
@@ -81,12 +102,8 @@ public final class Year2018Day15 {
         }
       }
     }
-    final int result = rounds * hp;
+    final long result = rounds * hp;
     return result;
-  }
-
-  public long calculatePart2() {
-    return 0;
   }
 
   private AttackResult takeTurn(final State state, final Point location) {
@@ -442,6 +459,16 @@ public final class Year2018Day15 {
           }
           else if (ch == 'G') {
             actors[y][x] = new Actor(Force.GOBLINS);
+          }
+        }
+      }
+    }
+
+    void addBonusAp(final Force force, final int apBonus) {
+      for (int y = 0; y < Y; ++y) {
+        for (int x = 0; x < Y; ++x) {
+          if (actors[y][x] != null && actors[y][x].force == force) {
+            actors[y][x].ap += apBonus;
           }
         }
       }

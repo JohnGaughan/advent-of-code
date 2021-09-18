@@ -211,7 +211,7 @@ public class Year2018Tests {
   @Test
   public void year2018day15part2() {
     final long answer = new Year2018Day15().calculatePart2();
-    assertEquals(Long.MIN_VALUE, answer);
+    assertEquals(64_688, answer);
   }
 
   @Test
