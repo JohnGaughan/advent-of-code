@@ -217,13 +217,13 @@ public class Year2018Tests {
   @Test
   public void year2018day16part1() {
     final long answer = new Year2018Day16().calculatePart1();
-    assertEquals(Long.MIN_VALUE, answer);
+    assertEquals(607, answer);
   }
 
   @Test
   public void year2018day16part2() {
     final long answer = new Year2018Day16().calculatePart2();
-    assertEquals(Long.MIN_VALUE, answer);
+    assertEquals(577, answer);
   }
 
   @Test
