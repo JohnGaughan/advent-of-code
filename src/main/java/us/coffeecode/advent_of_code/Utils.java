@@ -133,7 +133,7 @@ public final class Utils {
   public static int[] getPrimesUpTo(final int max) {
     // Sieve omits 1 and all even numbers. Mark composites as true, since the default array element is false.
     final boolean[] sieve = new boolean[max >> 1];
-    int numPrimes = 0;
+    int numPrimes = 1;
     for (int i = 0; i < sieve.length; ++i) {
       int value = (i << 1) + 3;
       if (!sieve[i]) {
@@ -144,8 +144,9 @@ public final class Utils {
       }
     }
     final int[] primes = new int[numPrimes];
+    primes[0] = 2;
     int j = 0;
-    for (int i = 0; i < primes.length; ++i) {
+    for (int i = 1; i < primes.length; ++i) {
       while (sieve[j]) {
         ++j;
       }
