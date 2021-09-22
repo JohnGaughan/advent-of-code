@@ -73,7 +73,7 @@ public final class Year2017Day23 {
     final int c = b - input[7].arg2;
 
     int composites = 0;
-    final int[] primes = primes(c);
+    final int[] primes = Utils.getPrimesUpTo(c);
     for (int i = b; i <= c; i += 17) {
       if (Arrays.binarySearch(primes, i) < 0) {
         ++composites;
@@ -81,31 +81,6 @@ public final class Year2017Day23 {
     }
 
     return composites;
-  }
-
-  private int[] primes(final int max) {
-    // Sieve omits 1 and all even numbers. Mark composites as true, since the default array element is false.
-    final boolean[] sieve = new boolean[max >> 1];
-    int numPrimes = 0;
-    for (int i = 0; i < sieve.length; ++i) {
-      int value = (i << 1) + 3;
-      if (!sieve[i]) {
-        ++numPrimes;
-        for (int j = i + value; j < sieve.length; j += value) {
-          sieve[j] = true;
-        }
-      }
-    }
-    final int[] primes = new int[numPrimes];
-    int j = 0;
-    for (int i = 0; i < primes.length; ++i) {
-      while (sieve[j]) {
-        ++j;
-      }
-      primes[i] = (j << 1) + 3;
-      ++j;
-    }
-    return primes;
   }
 
   /** Get the input data for this solution. */

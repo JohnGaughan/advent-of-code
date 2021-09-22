@@ -125,6 +125,37 @@ public final class Utils {
   }
 
   /**
+   * Get all prime numbers equal to or less than the provided upper bound.
+   *
+   * @param max the value of the maximum allowed number
+   * @return an array of all unique prime number equal to or less than the maximum value.
+   */
+  public static int[] getPrimesUpTo(final int max) {
+    // Sieve omits 1 and all even numbers. Mark composites as true, since the default array element is false.
+    final boolean[] sieve = new boolean[max >> 1];
+    int numPrimes = 0;
+    for (int i = 0; i < sieve.length; ++i) {
+      int value = (i << 1) + 3;
+      if (!sieve[i]) {
+        ++numPrimes;
+        for (int j = i + value; j < sieve.length; j += value) {
+          sieve[j] = true;
+        }
+      }
+    }
+    final int[] primes = new int[numPrimes];
+    int j = 0;
+    for (int i = 0; i < primes.length; ++i) {
+      while (sieve[j]) {
+        ++j;
+      }
+      primes[i] = (j << 1) + 3;
+      ++j;
+    }
+    return primes;
+  }
+
+  /**
    * Calculate all of the permutations of the provided items. Each permutation will be stored in a list that conveys the
    * ordering of the items, with all permutations in a set that enforces uniqueness among orderings.
    *
