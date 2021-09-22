@@ -19,11 +19,13 @@ package us.coffeecode.advent_of_code.y2018;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import us.coffeecode.advent_of_code.Utils;
+import us.coffeecode.advent_of_code.y2018.opcode.OpCode;
 
 /**
  * <p>
@@ -56,7 +58,7 @@ public final class Year2018Day16 {
     final Input input = getInput();
     long result = 0;
     for (final Sample sample : input.samples) {
-      if (test(sample, false) >= 3) {
+      if (test(sample, null) >= 3) {
         ++result;
       }
     }
@@ -66,26 +68,28 @@ public final class Year2018Day16 {
   public long calculatePart2() {
     final Input input = getInput();
     // Keep testing until all opcodes are assigned.
-    while (!OpCode.allAssigned()) {
+    final Map<Integer, OpCode> opcodes = new HashMap<>();
+    while (opcodes.size() != OpCode.values().length) {
       for (final Sample sample : input.samples) {
-        test(sample, true);
+        test(sample, opcodes);
       }
     }
 
     // Now execute the program.
     final int[] registers = new int[] { 0, 0, 0, 0 };
     for (final int[] instruction : input.instructions) {
-      OpCode.BY_CODE[instruction[0]].apply(registers, instruction[1], instruction[2], instruction[3]);
+      final Integer key = Integer.valueOf(instruction[0]);
+      opcodes.get(key).apply(registers, instruction[1], instruction[2], instruction[3]);
     }
     return registers[0];
   }
 
   /** Test a sample to see if three or more opcodes would have the same effect. */
-  private int test(final Sample sample, final boolean partTwo) {
+  private int test(final Sample sample, final Map<Integer, OpCode> opcodes) {
     int count = 0;
     OpCode toAssign = null;
-    for (final OpCode opCode : OpCode.OPCODES) {
-      if (partTwo && opCode.hasCode()) {
+    for (final OpCode opCode : OpCode.values()) {
+      if (opcodes != null && opcodes.values().contains(opCode)) {
         continue;
       }
       final int[] registers = Arrays.copyOf(sample.registersBefore, sample.registersBefore.length);
@@ -95,8 +99,8 @@ public final class Year2018Day16 {
         toAssign = opCode;
       }
     }
-    if (partTwo && count == 1 && toAssign != null) {
-      toAssign.setCode(sample.instruction[0]);
+    if (opcodes != null && count == 1 && toAssign != null) {
+      opcodes.put(Integer.valueOf(sample.instruction[0]), toAssign);
     }
     return count;
   }
@@ -111,169 +115,6 @@ public final class Year2018Day16 {
     }
     catch (Exception ex) {
       throw new RuntimeException(ex);
-    }
-  }
-
-  private static abstract class OpCode {
-
-    static final Collection<OpCode> OPCODES = new ArrayList<>(16);
-
-    static final OpCode[] BY_CODE = new OpCode[16];
-
-    static boolean allAssigned() {
-      for (int i = 0; i < BY_CODE.length; ++i) {
-        if (BY_CODE[i] == null) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    static final OpCode addr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] + registers[b];
-      }
-    };
-
-    static final OpCode addi = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] + b;
-      }
-    };
-
-    static final OpCode mulr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] * registers[b];
-      }
-    };
-
-    static final OpCode muli = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] * b;
-      }
-    };
-
-    static final OpCode banr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] & registers[b];
-      }
-    };
-
-    static final OpCode bani = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] & b;
-      }
-    };
-
-    static final OpCode borr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] | registers[b];
-      }
-    };
-
-    static final OpCode bori = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] | b;
-      }
-    };
-
-    static final OpCode setr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a];
-      }
-    };
-
-    static final OpCode seti = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = a;
-      }
-    };
-
-    static final OpCode gtir = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = a > registers[b] ? 1 : 0;
-      }
-    };
-
-    static final OpCode gtri = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] > b ? 1 : 0;
-      }
-    };
-
-    static final OpCode gtrr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] > registers[b] ? 1 : 0;
-      }
-    };
-
-    static final OpCode eqir = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = a == registers[b] ? 1 : 0;
-      }
-    };
-
-    static final OpCode eqri = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] == b ? 1 : 0;
-      }
-    };
-
-    static final OpCode eqrr = new OpCode() {
-
-      @Override
-      void apply(final int[] registers, final int a, final int b, final int c) {
-        registers[c] = registers[a] == registers[b] ? 1 : 0;
-      }
-    };
-
-    OpCode() {
-      OPCODES.add(this);
-    }
-
-    abstract void apply(final int[] registers, final int a, final int b, final int c);
-
-    void setCode(final int code) {
-      BY_CODE[code] = this;
-    }
-
-    boolean hasCode() {
-      for (final OpCode opCode : BY_CODE) {
-        if (this == opCode) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 
